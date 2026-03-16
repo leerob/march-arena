@@ -36,7 +36,7 @@ export default function AboutPage() {
         <Section title="The AI Model">
           <p>
             Each game is simulated using{" "}
-            <strong>Google&apos;s Gemini 3 Flash</strong> model with structured
+            <strong>Anthropic&apos;s Claude 4.5 Haiku</strong> model with structured
             output. The AI acts as an &quot;elite March Madness analyst&quot;
             filling out a bracket to win a pool, not just picking favorites
             but weighing matchup-specific factors like defensive efficiency,
@@ -220,6 +220,7 @@ export default function AboutPage() {
         {/* What People Are Saying */}
         <Section title="Other Tweets">
           <div className="grid gap-4 sm:grid-cols-2 not-prose">
+            <Tweet id="2033572003454530042" />
             <Tweet id="2033356869889396923" />
             <Tweet id="2033351062212555031" />
             <Tweet id="2033528719697236409" />
