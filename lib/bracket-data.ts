@@ -171,7 +171,7 @@ const TEAM_IDS: Record<string, number> = {
   Omaha: 250,
   Houston: 248,
   SIUE: 256,
-  Gonzaga: 225,
+  Gonzaga: 2250,
   Georgia: 61,
   Clemson: 228,
   McNeese: 242,
