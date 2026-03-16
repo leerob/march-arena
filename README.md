@@ -2,6 +2,8 @@
 
 An AI-powered NCAA Tournament bracket simulator built with Next.js and Google Gemini. Watch the full 2026 bracket unfold in real time as an AI analyst picks every game — from the First Four through the national championship — using KenPom ratings, historical seed data, and matchup context.
 
+Try it out at https://www.marcharena.com.
+
 ## How It Works
 
 1. **Hit "Start simulation"** — the app kicks off a durable workflow that simulates every tournament game
