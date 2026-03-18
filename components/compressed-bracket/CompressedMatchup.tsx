@@ -56,6 +56,7 @@ export function CompressedMatchup({
         compact
         compactMultiline
         logoLoading={logoLoading}
+        winnerRowHighlight={showScores}
       />
       <div className={styles.matchupDivider} aria-hidden />
       <TeamRow
@@ -65,6 +66,7 @@ export function CompressedMatchup({
         compact
         compactMultiline
         logoLoading={logoLoading}
+        winnerRowHighlight={showScores}
       />
     </div>
   );

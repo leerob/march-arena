@@ -23,20 +23,39 @@ function TeamHeader({
   winProbability,
   highlightWinProb,
   panel,
+  finalScore,
+  showScoresInsteadOfProb,
+  /** Finished game: same padding on both rows so winner tint doesn’t shift layout */
+  evenFinalRowLayout,
 }: {
   team: Team;
   winProbability: number;
   highlightWinProb?: boolean;
   panel?: boolean;
+  finalScore?: number;
+  showScoresInsteadOfProb?: boolean;
+  evenFinalRowLayout?: boolean;
 }) {
-  const rowHighlight =
-    highlightWinProb &&
-    (panel
-      ? "rounded-lg bg-emerald-500/[0.06] px-3 py-2.5 -mx-1"
-      : "rounded-lg bg-[#f0f9f0] px-3 py-2.5 -mx-1");
+  const rowClasses = (() => {
+    if (evenFinalRowLayout && panel) {
+      return [
+        "py-2",
+        highlightWinProb ? "rounded-lg bg-emerald-500/[0.06]" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+    }
+    if (highlightWinProb && panel) {
+      return "rounded-lg bg-emerald-500/[0.06] px-3 py-2.5 -mx-1";
+    }
+    if (highlightWinProb && !panel) {
+      return "rounded-lg bg-[#f0f9f0] px-3 py-2.5 -mx-1";
+    }
+    return "";
+  })();
 
   return (
-    <div className={`flex items-center gap-3 ${rowHighlight || ""}`}>
+    <div className={`flex items-center gap-3 ${rowClasses}`}>
       <img
         src={getTeamLogoUrl(team.id, 48)}
         alt={team.name}
@@ -50,7 +69,11 @@ function TeamHeader({
           <span className="text-[10px] font-medium text-white bg-[#121213] px-1.5 py-0.5 rounded">
             {team.seed}
           </span>
-          <span className="text-[16px] font-semibold text-[#121213]">
+          <span
+            className={`text-[16px] text-[#121213] ${
+              highlightWinProb ? "font-bold" : "font-semibold"
+            }`}
+          >
             {team.name}
           </span>
         </div>
@@ -60,10 +83,24 @@ function TeamHeader({
         </div>
       </div>
       <div className="ml-auto shrink-0 text-right">
-        <div className="text-[24px] font-bold text-[#121213]">
-          {Math.round(winProbability * 100)}%
-        </div>
-        <div className="text-[10px] text-[#6c6e6f] uppercase">Win Prob</div>
+        {showScoresInsteadOfProb && finalScore !== undefined ? (
+          <>
+            <div
+              className={`text-[24px] tabular-nums ${
+                highlightWinProb ? "font-extrabold text-[#121213]" : "font-bold text-[#6c6e6f]"
+              }`}
+            >
+              {finalScore}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="text-[24px] font-bold text-[#121213]">
+              {Math.round(winProbability * 100)}%
+            </div>
+            <div className="text-[10px] text-[#6c6e6f] uppercase">Win Prob</div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -184,6 +221,10 @@ export function MatchupStatsPanel({
 
   // Check if game is completed
   const isCompleted = "winner" in game && game.winner !== undefined;
+  const isFinalWithScores =
+    game.status === "final" &&
+    game.score1 !== undefined &&
+    game.score2 !== undefined;
   const reasoning = "reasoning" in game ? game.reasoning : undefined;
 
   const shell = panel
@@ -199,7 +240,14 @@ export function MatchupStatsPanel({
   return (
     <div className={shell}>
       <div className={`${sectionPad} border-b ${sectionBorder}`}>
-        <div className={`${labelClass} mb-3`}>Matchup</div>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div className={labelClass}>Matchup</div>
+          {isFinalWithScores && (
+            <span className="text-[11px] font-extrabold uppercase tracking-wide text-[#121213]">
+              {game.statusLabel ?? "Final"}
+            </span>
+          )}
+        </div>
 
         <div className="mb-4">
           <TeamHeader
@@ -207,6 +255,9 @@ export function MatchupStatsPanel({
             winProbability={winProb1}
             highlightWinProb={Boolean(isCompleted && game.winner === 1)}
             panel={panel}
+            finalScore={game.score1}
+            showScoresInsteadOfProb={isFinalWithScores}
+            evenFinalRowLayout={Boolean(panel && isFinalWithScores)}
           />
         </div>
 
@@ -222,6 +273,9 @@ export function MatchupStatsPanel({
             winProbability={winProb2}
             highlightWinProb={Boolean(isCompleted && game.winner === 2)}
             panel={panel}
+            finalScore={game.score2}
+            showScoresInsteadOfProb={isFinalWithScores}
+            evenFinalRowLayout={Boolean(panel && isFinalWithScores)}
           />
         </div>
         {isCompleted && reasoning && (

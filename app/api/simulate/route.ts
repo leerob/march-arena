@@ -4,17 +4,11 @@ import { simulateBracket } from "@/lib/simulate-bracket";
 import { BRACKET_2026 } from "@/lib/bracket-data";
 import type { SimulatedBracket } from "@/lib/bracket-data";
 import { saveSimulationResults } from "@/lib/leaderboard";
-import { SIMULATE_TEMPORARILY_DISABLED } from "@/lib/simulate-gate";
+import { showSim } from "@/lib/simulate-gate";
 
 export const maxDuration = 500;
 
 const RATE_LIMIT_ID = "update-object";
-
-/** Off while SIMULATE_TEMPORARILY_DISABLED; else on in dev / SIMULATE_ENABLED. */
-const SIMULATE_API_ENABLED =
-  !SIMULATE_TEMPORARILY_DISABLED &&
-  (process.env.NODE_ENV === "development" ||
-    process.env.SIMULATE_ENABLED === "true");
 
 async function trySaveResults(result: SimulatedBracket) {
   try {
@@ -25,7 +19,7 @@ async function trySaveResults(result: SimulatedBracket) {
 }
 
 export async function POST(request: Request) {
-  if (!SIMULATE_API_ENABLED) {
+  if (!showSim()) {
     return new Response(JSON.stringify({ error: "Not found" }), {
       status: 404,
       headers: { "Content-Type": "application/json" },

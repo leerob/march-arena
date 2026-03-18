@@ -13,6 +13,8 @@ interface TeamRowProps {
   compactMultiline?: boolean;
   /** Sim in progress — spinner in logo slot */
   logoLoading?: boolean;
+  /** Final game: highlight winning team row with sidebar-matching green */
+  winnerRowHighlight?: boolean;
 }
 
 export function TeamRow({
@@ -22,6 +24,7 @@ export function TeamRow({
   compact = false,
   compactMultiline = false,
   logoLoading = false,
+  winnerRowHighlight = false,
 }: TeamRowProps) {
   /** CDN pixels (large enough for 2–3× DPR after CSS downscale) */
   const logoSrcSize = compact ? 72 : 96;
@@ -34,7 +37,7 @@ export function TeamRow({
         compact
           ? "min-h-[16px] px-1.5 py-[2px] sm:min-h-[17px]"
           : "min-h-[20px] px-1.5 py-0.5"
-      }`}
+      } ${winnerRowHighlight && isWinner ? "bg-emerald-500/[0.06]" : ""}`}
     >
       <div className="BracketCell__Competitor flex items-center min-w-0 gap-1">
         <div
@@ -92,21 +95,7 @@ export function TeamRow({
             compact ? "text-[10px] sm:text-[11px]" : "text-[12px]"
           } ${isWinner ? "text-[#121213]" : "text-[#6c6e6f]"}`}
         >
-          <div>{score}</div>
-          {isWinner && (
-            <svg
-              aria-hidden="true"
-              className={`BracketCell__WinnerIcon ml-0.5 ${
-                compact ? "h-[8px] w-[8px] sm:h-[9px] sm:w-[9px]" : "w-[10px] h-[10px]"
-              }`}
-              viewBox="0 0 24 24"
-            >
-              <path
-                fill="#121213"
-                d="M10 17l5-5-5-5v10z"
-              />
-            </svg>
-          )}
+          {score}
         </div>
       )}
     </div>

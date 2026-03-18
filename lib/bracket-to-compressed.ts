@@ -167,6 +167,9 @@ export function bracketToCompressedModel(
   };
 }
 
+/** Default sidebar selection when sim UI is off (South 1-seed R64, e.g. Florida vs 16). */
+export const NO_SIM_DEFAULT_SELECTED_GAME_ID = "s-r64-1";
+
 /** Stable iteration order for compressed-layout games (matches grid / selection). */
 export function compressedModelGamePool(m: CompressedBracketModel): Game[] {
   return [

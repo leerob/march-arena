@@ -10,13 +10,9 @@ import type { Bracket as BracketType, Game, SimulatedBracket } from "@/lib/brack
 import {
   findCompressedGameById,
   getInProgressCompressedGameIds,
+  NO_SIM_DEFAULT_SELECTED_GAME_ID,
 } from "@/lib/bracket-to-compressed";
-import { SIMULATE_TEMPORARILY_DISABLED } from "@/lib/simulate-gate";
-
-const SIM_UI_ENABLED =
-  !SIMULATE_TEMPORARILY_DISABLED &&
-  (process.env.NODE_ENV === "development" ||
-    process.env.NEXT_PUBLIC_SIMULATE_ENABLED === "true");
+import { showSim } from "@/lib/simulate-gate";
 
 function inferSimPhase(b: BracketType | SimulatedBracket): string {
   if (!b.firstFour.every((g) => g.winner)) return "First Four";
@@ -53,30 +49,7 @@ function ProductionAside({
       className="flex w-full shrink-0 flex-col overflow-hidden border-t border-[#e8e8e8] bg-white max-h-[50dvh] md:max-h-[42dvh] lg:max-h-none lg:w-[28%] lg:min-w-0 lg:border-l lg:border-t-0"
       aria-label="Matchup details"
     >
-      <div className="shrink-0 px-6 pb-6 pt-6 lg:px-8 lg:pb-8 lg:pt-8">
-        <h1 className="text-[22px] font-bold tracking-tight text-[#1a1a1a]">
-          March Madness AI
-        </h1>
-        <p className="mt-3 text-[14px] leading-relaxed text-[#5c5c5c]">
-          This project simulates the full bracket with an AI analyst (First Four
-          through the championship) using KenPom-style stats, seed history, and
-          matchup context. The live sim isn&apos;t hosted here—the implementation
-          is in the repo if you want to run it yourself.
-        </p>
-        <a
-          href="https://github.com/leerob/march-arena"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-5 flex items-center justify-center gap-2 rounded-lg bg-[#c8102e] px-5 py-3.5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#a50d25]"
-        >
-          View the code
-        </a>
-        <p className="mt-3 text-[12px] leading-relaxed text-[#8a8a8a]">
-          You will need to bring your own API key to run the simulation locally
-          (see repo README).
-        </p>
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden border-t border-[#eee]">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
         <MatchupStatsPanel
           game={selectedGame}
           variant="panel"
@@ -314,10 +287,12 @@ function LocalSimHome() {
 
 export default function Home() {
   const [bracket] = useState<BracketType | SimulatedBracket>(BRACKET_2026);
-  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(() =>
+    showSim() ? null : NO_SIM_DEFAULT_SELECTED_GAME_ID
+  );
   const onSelectGame = useCallback((game: Game) => setSelectedGameId(game.id), []);
 
-  if (SIM_UI_ENABLED) {
+  if (showSim()) {
     return <LocalSimHome />;
   }
 

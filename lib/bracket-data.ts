@@ -384,6 +384,28 @@ function scheduledGame(
   return { id, status: "scheduled", team1, team2 };
 }
 
+/** Completed game with box score (winner must match higher score). */
+export function finalGame(
+  id: string,
+  team1: Team,
+  team2: Team,
+  score1: number,
+  score2: number,
+  statusLabel = "Final"
+): Game {
+  const winner: 1 | 2 = score1 > score2 ? 1 : 2;
+  return {
+    id,
+    status: "final",
+    team1,
+    team2,
+    score1,
+    score2,
+    winner,
+    statusLabel,
+  };
+}
+
 export function placeholderGame(id: string): Game {
   return scheduledGame(id, TBD_TEAM, TBD_TEAM);
 }
@@ -517,7 +539,7 @@ export const BRACKET_2026: Bracket = {
   year: 2026,
   schedule: SCHEDULE_2026,
   firstFour: [
-    scheduledGame("ff1", team("UMBC", 16), team("Howard", 16)),
+    finalGame("ff1", team("UMBC", 16), team("Howard", 16), 83, 86),
     scheduledGame("ff2", team("Miami OH", 11), team("SMU", 11)),
     scheduledGame("ff3", team("Prairie View", 16), team("Lehigh", 16)),
     scheduledGame("ff4", team("Texas", 11), team("NC State", 11)),
@@ -528,7 +550,7 @@ export const BRACKET_2026: Bracket = {
       // 1 seed: Florida
       rounds: [
         [
-          scheduledGame("s1", team("Florida", 1), team("UMBC", 16)),
+          scheduledGame("s1", team("Florida", 1), team("Howard", 16)),
           scheduledGame("s2", team("Clemson", 8), team("Iowa", 9)),
           scheduledGame("s3", team("Vanderbilt", 5), team("McNeese", 12)),
           scheduledGame("s4", team("Nebraska", 4), team("Troy", 13)),
