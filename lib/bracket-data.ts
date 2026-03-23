@@ -585,7 +585,7 @@ export const BRACKET_2026: Bracket = {
         ],
         [
           finalGame("e9", team("Duke", 1), team("TCU", 9), 81, 58),
-          finalGame("e10", team("Kansas", 4), team("St John's", 5), 65, 67),
+          finalGame("e10", team("St John's", 5), team("Kansas", 4), 67, 65),
           finalGame("e11", team("Louisville", 6), team("Michigan St", 3), 69, 77),
           placeholderGame("e12"),
         ],
@@ -631,13 +631,17 @@ export const BRACKET_2026: Bracket = {
           finalGame("m7", team("Kentucky", 7), team("Santa Clara", 10), 89, 84, "Final/OT"),
           finalGame("m8", team("Iowa State", 2), team("Tennessee St", 15), 108, 74),
         ],
+        // R32 order matches NCAA quadrants: [1-pod, 5/4-pod, 6/3-pod, 7/2-pod] so S16 pairs (m9+m11) and (m10+m12).
         [
           finalGame("m9", team("Michigan", 1), team("Saint Louis", 9), 95, 72),
-          finalGame("m10", team("Tennessee", 6), team("Virginia", 3), 79, 72),
           placeholderGame("m11"),
+          finalGame("m10", team("Tennessee", 6), team("Virginia", 3), 79, 72),
           finalGame("m12", team("Kentucky", 7), team("Iowa State", 2), 63, 82),
         ],
-        [placeholderGame("m13"), placeholderGame("m14")],
+        [
+          scheduledGame("m13", team("Michigan", 1), TBD_TEAM),
+          scheduledGame("m14", team("Tennessee", 6), team("Iowa State", 2)),
+        ],
         [placeholderGame("m15")],
       ],
     },
