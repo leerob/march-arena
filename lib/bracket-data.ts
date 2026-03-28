@@ -593,8 +593,8 @@ export const BRACKET_2026: Bracket = {
           finalGame("e12", team("UConn", 2), team("UCLA", 7), 73, 57),
         ],
         [
-          scheduledGame("e13", team("Duke", 1), team("St John's", 5)),
-          scheduledGame("e14", team("UConn", 2), team("Michigan St", 3)),
+          finalGame("e13", team("Duke", 1), team("St John's", 5), 80, 75),
+          finalGame("e14", team("Michigan St", 3), team("UConn", 2), 63, 67),
         ],
         [placeholderGame("e15")],
       ],
@@ -648,8 +648,8 @@ export const BRACKET_2026: Bracket = {
           finalGame("m12", team("Kentucky", 7), team("Iowa State", 2), 63, 82),
         ],
         [
-          scheduledGame("m13", team("Michigan", 1), team("Alabama", 4)),
-          scheduledGame("m14", team("Tennessee", 6), team("Iowa State", 2)),
+          finalGame("m13", team("Michigan", 1), team("Alabama", 4), 90, 77),
+          finalGame("m14", team("Tennessee", 6), team("Iowa State", 2), 76, 62),
         ],
         [placeholderGame("m15")],
       ],
