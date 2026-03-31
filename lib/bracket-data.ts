@@ -569,7 +569,7 @@ export const BRACKET_2026: Bracket = {
           finalGame("s13", team("Iowa", 9), team("Nebraska", 4), 77, 71),
           finalGame("s14", team("Illinois", 3), team("Houston", 2), 65, 55),
         ],
-        [placeholderGame("s15")],
+        [finalGame("s15", team("Iowa", 9), team("Illinois", 3), 59, 71)],
       ],
     },
     {
@@ -590,13 +590,13 @@ export const BRACKET_2026: Bracket = {
           finalGame("e9", team("Duke", 1), team("TCU", 9), 81, 58),
           finalGame("e10", team("St John's", 5), team("Kansas", 4), 67, 65),
           finalGame("e11", team("Louisville", 6), team("Michigan St", 3), 69, 77),
-          finalGame("e12", team("UConn", 2), team("UCLA", 7), 73, 57),
+          finalGame("e12", team("UConn", 2), team("UCLA", 7), 57, 73),
         ],
         [
           finalGame("e13", team("Duke", 1), team("St John's", 5), 80, 75),
           finalGame("e14", team("Michigan St", 3), team("UConn", 2), 63, 67),
         ],
-        [placeholderGame("e15")],
+        [finalGame("e15", team("Duke", 1), team("UConn", 2), 72, 73)],
       ],
     },
     {
@@ -623,7 +623,7 @@ export const BRACKET_2026: Bracket = {
           finalGame("w13", team("Arizona", 1), team("Arkansas", 4), 109, 88),
           finalGame("w14", team("Texas", 11), team("Purdue", 2), 77, 79),
         ],
-        [placeholderGame("w15")],
+        [finalGame("w15", team("Arizona", 1), team("Purdue", 2), 79, 64)],
       ],
     },
     {
@@ -651,7 +651,7 @@ export const BRACKET_2026: Bracket = {
           finalGame("m13", team("Michigan", 1), team("Alabama", 4), 90, 77),
           finalGame("m14", team("Tennessee", 6), team("Iowa State", 2), 76, 62),
         ],
-        [placeholderGame("m15")],
+        [finalGame("m15", team("Michigan", 1), team("Tennessee",6), 95, 62)],
       ],
     },
   ],
