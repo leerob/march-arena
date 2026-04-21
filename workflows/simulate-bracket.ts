@@ -1,3 +1,4 @@
+import { getWritable } from "workflow";
 import {
   type Bracket,
   type Game,
@@ -39,14 +40,10 @@ const FF_PLACEHOLDERS: Game[] = [
 ];
 const CHAMP_PLACEHOLDER = placeholderGame("champ");
 
-async function emit(writer: WritableStreamDefaultWriter<string>, update: SimulationProgress) {
-  await writer.write(JSON.stringify(update) + "\n");
-}
+export async function simulateBracket(bracket: Bracket): Promise<SimulatedBracket> {
+  "use workflow";
 
-export async function simulateBracket(
-  bracket: Bracket,
-  writer: WritableStreamDefaultWriter<string>,
-): Promise<SimulatedBracket> {
+  const writable = getWritable<string>();
   const completedStages: SimulationStage[] = [];
   let tournamentContext: TournamentContext = {
     upsets: [],
@@ -64,7 +61,7 @@ export async function simulateBracket(
   ]);
 
   const firstFourStepResult = await simulateFirstFourRound(
-    writer,
+    writable,
     bracket.firstFour.map((g) => ({ ...g, status: "scheduled" as const })),
     {
       roundName: "First Four",
@@ -100,7 +97,7 @@ export async function simulateBracket(
     ...placeholderRoundsFrom(region, 1),
   ]);
 
-  await emit(writer, buildWorkflowStreamPayload(
+  await emitProgress(writable, buildWorkflowStreamPayload(
     bracket, firstFourResults, cloneDisplay(regionDisplay),
     FF_PLACEHOLDERS.map((g) => ({ ...g })),
     { ...CHAMP_PLACEHOLDER },
@@ -159,7 +156,7 @@ export async function simulateBracket(
     );
 
     const roundResult = await simulateRegionalRound(
-      writer, roundIdx, jobs, regionDisplay, bracket, firstFourResults,
+      writable, roundIdx, jobs, regionDisplay, bracket, firstFourResults,
       stage, [...completedStages], tournamentContext, SIM_GAME_CONCURRENCY,
     );
     regionDisplay = roundResult.regionDisplay;
@@ -191,7 +188,7 @@ export async function simulateBracket(
   ];
 
   const finalsResult = await simulateFinalsRound(
-    writer,
+    writable,
     finalFourGames,
     {
       roundName: "Final Four",
@@ -211,7 +208,7 @@ export async function simulateBracket(
   completedStages.push("finals");
 
   // ── 6. Final emission with winner ──────────────────────────────────
-  await emit(writer, {
+  await emitProgress(writable, {
     ...buildWorkflowStreamPayload(
       bracket,
       firstFourResults,
@@ -223,7 +220,7 @@ export async function simulateBracket(
     ),
     winner: finalsResult.winner,
   });
-  writer.close();
+  await closeProgressStream(writable);
 
   // ── Build return value ─────────────────────────────────────────────
   return {
@@ -243,11 +240,11 @@ export async function simulateBracket(
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// Simulate all First Four games
+// Step: Simulate all First Four games (1 step for 4 games)
 // ══════════════════════════════════════════════════════════════════════
 
 async function simulateFirstFourRound(
-  writer: WritableStreamDefaultWriter<string>,
+  writable: WritableStream<string>,
   games: Game[],
   baseContext: { roundName: string; location?: string },
   bracket: Bracket,
@@ -259,6 +256,8 @@ async function simulateFirstFourRound(
   results: SimulatedGame[];
   tournamentContext: TournamentContext;
 }> {
+  "use step";
+
   const display = games.map((g) => ({ ...g }));
   const ctx = JSON.parse(JSON.stringify(tournamentContext)) as TournamentContext;
   const results: SimulatedGame[] = [];
@@ -270,14 +269,16 @@ async function simulateFirstFourRound(
       display[i + j] = { ...game, status: "in_progress" };
     });
 
-    await emit(writer, buildWorkflowStreamPayload(
+    let writer = writable.getWriter();
+    await writer.write(JSON.stringify(buildWorkflowStreamPayload(
       bracket,
       display.map((g) => ({ ...g })),
       cloneDisplay(regionDisplayDuringFF),
       FF_PLACEHOLDERS.map((g) => ({ ...g })),
       { ...CHAMP_PLACEHOLDER },
       "first-four", [...completedStages],
-    ));
+    )) + "\n");
+    writer.releaseLock();
 
     const chunkRes = await Promise.all(
       chunk.map((game) =>
@@ -291,25 +292,27 @@ async function simulateFirstFourRound(
       updateTournamentContext(ctx, chunk[j], res, "First Four");
     });
 
-    await emit(writer, buildWorkflowStreamPayload(
+    writer = writable.getWriter();
+    await writer.write(JSON.stringify(buildWorkflowStreamPayload(
       bracket,
       display.map((g) => ({ ...g })),
       cloneDisplay(regionDisplayDuringFF),
       FF_PLACEHOLDERS.map((g) => ({ ...g })),
       { ...CHAMP_PLACEHOLDER },
       "first-four", [...completedStages],
-    ));
+    )) + "\n");
+    writer.releaseLock();
   }
 
   return { results, tournamentContext: ctx };
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// Simulate one regional round across all 4 regions
+// Step: Simulate one regional round across all 4 regions (1 step per round)
 // ══════════════════════════════════════════════════════════════════════
 
 async function simulateRegionalRound(
-  writer: WritableStreamDefaultWriter<string>,
+  writable: WritableStream<string>,
   roundIdx: number,
   jobs: Array<{ game: Game; regionIdx: number; context: GameContext }>,
   regionDisplay: Game[][][],
@@ -323,15 +326,19 @@ async function simulateRegionalRound(
   regionDisplay: Game[][][];
   tournamentContext: TournamentContext;
 }> {
+  "use step";
+
   const display = cloneDisplay(regionDisplay);
   const ctx = JSON.parse(JSON.stringify(tournamentContext)) as TournamentContext;
 
-  await emit(writer, buildWorkflowStreamPayload(
+  let writer = writable.getWriter();
+  await writer.write(JSON.stringify(buildWorkflowStreamPayload(
     bracket, firstFourResults, cloneDisplay(display),
     FF_PLACEHOLDERS.map((g) => ({ ...g })),
     { ...CHAMP_PLACEHOLDER },
     stage, [...completedStages],
-  ));
+  )) + "\n");
+  writer.releaseLock();
 
   for (let i = 0; i < jobs.length; i += concurrency) {
     const chunk = jobs.slice(i, i + concurrency);
@@ -344,12 +351,14 @@ async function simulateRegionalRound(
       );
     }
 
-    await emit(writer, buildWorkflowStreamPayload(
+    writer = writable.getWriter();
+    await writer.write(JSON.stringify(buildWorkflowStreamPayload(
       bracket, firstFourResults, cloneDisplay(display),
       FF_PLACEHOLDERS.map((g) => ({ ...g })),
       { ...CHAMP_PLACEHOLDER },
       stage, [...completedStages],
-    ));
+    )) + "\n");
+    writer.releaseLock();
 
     const results = await Promise.all(
       chunk.map((j) =>
@@ -366,23 +375,25 @@ async function simulateRegionalRound(
       updateTournamentContext(ctx, job.game, results[j], ROUND_NAMES[roundIdx]);
     });
 
-    await emit(writer, buildWorkflowStreamPayload(
+    writer = writable.getWriter();
+    await writer.write(JSON.stringify(buildWorkflowStreamPayload(
       bracket, firstFourResults, cloneDisplay(display),
       FF_PLACEHOLDERS.map((g) => ({ ...g })),
       { ...CHAMP_PLACEHOLDER },
       stage, [...completedStages],
-    ));
+    )) + "\n");
+    writer.releaseLock();
   }
 
   return { regionDisplay: display, tournamentContext: ctx };
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// Simulate Final Four + Championship
+// Step: Simulate Final Four + Championship (1 step for 3 games)
 // ══════════════════════════════════════════════════════════════════════
 
 async function simulateFinalsRound(
-  writer: WritableStreamDefaultWriter<string>,
+  writable: WritableStream<string>,
   finalFourGames: Game[],
   finalFourBaseContext: { roundName: string; location?: string },
   championshipBaseContext: { roundName: string; location?: string },
@@ -397,18 +408,22 @@ async function simulateFinalsRound(
   winner: Team;
   tournamentContext: TournamentContext;
 }> {
+  "use step";
+
   const display = cloneDisplay(regionDisplay);
   const ctx = JSON.parse(JSON.stringify(tournamentContext)) as TournamentContext;
 
   let ffDisplay: Game[] = finalFourGames.map((g) => ({ ...g }));
   let champDisplay: Game = { ...CHAMP_PLACEHOLDER };
 
-  await emit(writer, buildWorkflowStreamPayload(
+  let writer = writable.getWriter();
+  await writer.write(JSON.stringify(buildWorkflowStreamPayload(
     bracket, firstFourResults, cloneDisplay(display),
     ffDisplay.map((g) => ({ ...g })),
     { ...champDisplay },
     "finals", [...completedStages],
-  ));
+  )) + "\n");
+  writer.releaseLock();
 
   const finalFourResults: SimulatedGame[] = [];
   for (let fi = 0; fi < 2; fi++) {
@@ -416,12 +431,14 @@ async function simulateFinalsRound(
       idx === fi ? { ...g, status: "in_progress" as const } : g
     );
 
-    await emit(writer, buildWorkflowStreamPayload(
+    writer = writable.getWriter();
+    await writer.write(JSON.stringify(buildWorkflowStreamPayload(
       bracket, firstFourResults, cloneDisplay(display),
       ffDisplay.map((g) => ({ ...g })),
       { ...champDisplay },
       "finals", [...completedStages],
-    ));
+    )) + "\n");
+    writer.releaseLock();
 
     const res = await simulateGameWithAI(finalFourGames[fi], {
       ...finalFourBaseContext,
@@ -434,12 +451,14 @@ async function simulateFinalsRound(
       idx === fi ? { ...res, status: "final" as const } : g
     );
 
-    await emit(writer, buildWorkflowStreamPayload(
+    writer = writable.getWriter();
+    await writer.write(JSON.stringify(buildWorkflowStreamPayload(
       bracket, firstFourResults, cloneDisplay(display),
       ffDisplay.map((g) => ({ ...g })),
       { ...champDisplay },
       "finals", [...completedStages],
-    ));
+    )) + "\n");
+    writer.releaseLock();
   }
 
   const championshipGame: Game = {
@@ -450,12 +469,14 @@ async function simulateFinalsRound(
   };
 
   champDisplay = { ...championshipGame, status: "in_progress" };
-  await emit(writer, buildWorkflowStreamPayload(
+  writer = writable.getWriter();
+  await writer.write(JSON.stringify(buildWorkflowStreamPayload(
     bracket, firstFourResults, cloneDisplay(display),
     ffDisplay.map((g) => ({ ...g })),
     { ...champDisplay },
     "finals", [...completedStages],
-  ));
+  )) + "\n");
+  writer.releaseLock();
 
   const championshipResult = await simulateGameWithAI(championshipGame, {
     ...championshipBaseContext,
@@ -469,4 +490,22 @@ async function simulateFinalsRound(
     winner,
     tournamentContext: ctx,
   };
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// Utility steps (lightweight, called sparingly)
+// ══════════════════════════════════════════════════════════════════════
+
+async function emitProgress(writable: WritableStream<string>, update: SimulationProgress): Promise<void> {
+  "use step";
+
+  const writer = writable.getWriter();
+  await writer.write(JSON.stringify(update) + "\n");
+  writer.releaseLock();
+}
+
+async function closeProgressStream(writable: WritableStream<string>): Promise<void> {
+  "use step";
+
+  await writable.close();
 }
